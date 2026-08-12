@@ -380,11 +380,13 @@ def _facets_link(text, url):
              "features": [{"$type": "app.bsky.richtext.facet#link", "uri": url}]}]
 
 
-def bsky_post_video(jwt, did, text, blob):
+def bsky_post_video(jwt, did, text, blob, lang):
     now = datetime.datetime.now(datetime.timezone.utc).strftime(
         "%Y-%m-%dT%H:%M:%S.%fZ")
+    # Bluesky permite maximo 3 idiomas; usamos el del post.
+    post_lang = "pt" if lang == "pt" else lang
     record = {"$type": "app.bsky.feed.post", "text": text, "createdAt": now,
-              "langs": ["es", "en", "fr", "de", "nl", "it", "pt"],
+              "langs": [post_lang],
               "embed": {"$type": "app.bsky.embed.video", "video": blob,
                         "aspectRatio": {"width": 9, "height": 16}}}
     fac = _facets_link(text, HABLIKO_URL)
@@ -452,7 +454,7 @@ def main():
     blob = bsky_wait_blob(job, stoken)
 
     print("-> Publicando post con video...")
-    url = bsky_post_video(jwt, did, text, blob)
+    url = bsky_post_video(jwt, did, text, blob, lang)
     print("   OK publicado: %s" % url)
 
     # avanzar rotacion
