@@ -2,9 +2,8 @@ name: Habliko Bluesky Video Publisher
 
 on:
   schedule:
-    # 2 videos al dia (UTC). 10:00 y 20:00 UTC = 12:00 y 22:00 en Luxemburgo (verano).
-    - cron: "0 10 * * *"
-    - cron: "0 20 * * *"
+    # Cada 2 horas (UTC), las 24h => 12 reels/dia.
+    - cron: "0 */2 * * *"
   workflow_dispatch: {}
 
 permissions:
