@@ -1,12 +1,12 @@
 {
-  "lang_index": 5,
+  "lang_index": 6,
   "topic_pointer": {
     "es": 1,
     "en": 1,
     "fr": 1,
     "de": 1,
     "nl": 1,
-    "it": 0,
+    "it": 1,
     "pt": 0,
     "lb": 0
   }
