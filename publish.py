@@ -39,6 +39,23 @@ PLC = "https://plc.directory"
 HABLIKO_URL = "https://habliko.com"
 VIDEO_RANDOM = "https://media.habliko.com/random/habliko/video/9x16/frase/{lang}"
 
+# --- Contacto (para el micro-CTA opcional del pie) ---
+HABLIKO_EMAIL = "hola@habliko.com"
+# WhatsApp: PENDIENTE. Formato internacional SIN "+", espacios ni guiones.
+HABLIKO_WHATSAPP = ""  # p.ej. "352691234567"
+# Micro-CTA de contacto en el pie del video. APAGADO por defecto: en un pie
+# de 300 caracteres el enlace a la web ya basta y el email/WhatsApp ensucian.
+# Ponlo en True si quieres que rote un contacto de vez en cuando (solo si cabe).
+ADD_CONTACT_CTA = False
+
+# --- Datos REALES de Habliko para el prompt (que la frase sea exacta si
+#     menciona la app). El modelo NO debe inventar nada fuera de esto. ---
+HABLIKO_FACTS = (
+    "Habliko is a language-learning app; mascot Foxi (an AI fox tutor); "
+    "8 languages; CEFR A1-C2; short lessons + mini-games; free to start; "
+    "Premium 2 EUR/month or 24 EUR/year."
+)
+
 GROQ_RETRIES = 2
 
 PROVIDERS = [
@@ -265,7 +282,9 @@ def gen_short(lang, theme):
         + theme + "\n\n"
         "Rules:\n- MAX 200 characters. One concrete tip or inspiring phrase.\n"
         "- No links, no hashtags inside the text.\n"
-        "- Natural tone. You may use 1-2 emojis.\n\n"
+        "- Natural tone. You may use 1-2 emojis.\n"
+        "- If you mention the app, only use these real facts, never invent: "
+        + HABLIKO_FACTS + "\n\n"
         'Return ONLY JSON: {"text": "...", "hashtags": ["#tag1", "#tag2"]}'
     )
     art = _parse_json_lenient(_multi_generate(system, user))
@@ -400,10 +419,27 @@ def bsky_post_video(jwt, did, text, blob, lang):
     return "https://bsky.app/profile/%s/post/%s" % (os.environ["BLUESKY_HANDLE"], rkey)
 
 
-def compose(art):
+def _micro_cta(seq):
+    """Micro-CTA rotatorio de contacto (solo si ADD_CONTACT_CTA=True).
+    Alterna: nada / email / WhatsApp (si hay numero). Devuelve "" si off."""
+    if not ADD_CONTACT_CTA:
+        return ""
+    opts = [""]
+    opts.append("\u2709\ufe0f " + HABLIKO_EMAIL)
+    if HABLIKO_WHATSAPP.strip():
+        opts.append("WhatsApp: wa.me/" + HABLIKO_WHATSAPP.strip())
+    return opts[seq % len(opts)]
+
+
+def compose(art, seq=0):
     tags = " ".join(art.get("hashtags", [])[:2])
     text = art["text"].strip()
     tail = "\n\n" + HABLIKO_URL + ("\n" + tags if tags else "")
+    cta = _micro_cta(seq)
+    tail_with_cta = tail + ("\n" + cta if cta else "")
+    # El CTA solo se incluye si deja hueco razonable para la frase.
+    if cta and (295 - len(tail_with_cta)) >= 60:
+        tail = tail_with_cta
     room = 295 - len(tail)
     if len(text) > room:
         text = text[:room - 1].rstrip() + "\u2026"
@@ -441,7 +477,7 @@ def main():
 
     print("-> Generando texto...")
     art = gen_short(lang, topic["theme"])
-    text = compose(art)
+    text = compose(art, topic["num"])
 
     print("-> Descargando video de R2...")
     video = fetch_video_bytes(lang)
