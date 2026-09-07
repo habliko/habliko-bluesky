@@ -1,5 +1,5 @@
 {
-  "lang_index": 7,
+  "lang_index": 0,
   "topic_pointer": {
     "es": 30,
     "en": 30,
@@ -8,6 +8,6 @@
     "nl": 30,
     "it": 30,
     "pt": 30,
-    "lb": 29
+    "lb": 30
   }
 }
